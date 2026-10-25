@@ -1,0 +1,22 @@
+# Секреты
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node.js
+node_modules/
+frontend/dist/
+
+# Редактор и система
+.vscode/
+.idea/
+.DS_Store
+
+# Логи
+*.log
+

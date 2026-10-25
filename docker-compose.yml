@@ -1,0 +1,71 @@
+
+services:
+  db:
+    image: postgres:16
+    container_name: fittrack_db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: fitness
+      POSTGRES_USER: fitness
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "127.0.0.1:5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fitness -d fitness"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web-service:
+    build: ./web-service
+    container_name: fittrack_calories
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8001:8000"
+
+  backend:
+    build: ./backend
+    container_name: fittrack_backend
+    restart: unless-stopped
+  
+
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: fitness
+      DB_USER: fitness
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      CALORIE_SERVICE_URL: http://web-service:8000
+
+    ports:
+      - "127.0.0.1:8002:8000"
+
+    depends_on:
+      db:
+        condition: service_healthy
+      web-service:
+        condition: service_started
+
+    
+  frontend:
+    build: ./frontend
+    container_name: fittrack_frontend
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    depends_on:
+      - backend
+
+      
+volumes:
+  postgres_data:
